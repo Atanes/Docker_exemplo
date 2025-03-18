@@ -136,8 +136,9 @@ e35892af715c   mysql-image   "docker-entrypoint.s…"   25 minutes ago   Up 25 m
 ```
 Se estiver tudo certo podemos abrir o browser e digitar a url 
 http://localhost:9001/products para ver as informações armazenadas no banco de dados dessa forma:
+  
 ![alt text](image.png)
-
+  
 Agora vamos construir a imagem e o container do PHP para deixar nosso "front-end" mais agradável e bonito:
 
 Criar uma pasta website na raiz do projeto e dentro dessa pasta criar o arquivo Dockerfile:
@@ -191,4 +192,5 @@ e depois criar o container com o comando
 docker run -d -v d:/Repositorios/Docker/website:/var/www/html -p 8888:80 --link node-container --rm --name php-container php-image
 ```
 O resultado final no browser deve ser esse:
+  
 ![alt text](image-1.png)
