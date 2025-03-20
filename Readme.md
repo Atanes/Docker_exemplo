@@ -1,9 +1,14 @@
-# Projeto exemplo para uso do  Docker
+# Projeto Docker Simplificado: MySQL, Node.js e PHP
+Este guia demonstra como criar e gerenciar um ambiente Docker com MySQL, Node.js e PHP, otimizando o processo com Docker e depois com Docker Compose.
 
-Criar pasta api -> db
-dentro da pasta db criar os arquivos Dockerfile e script.sql onforme abaixo:
+1. Configuração do MySQL:
 
-## Dockerfile:
+Estrutura de pastas:
+
+api/db/Dockerfile
+api/db/script.sql
+
+## Dockerfile (api/db/Dockerfile):
 ```bash
 ### Derivando da imagem oficial do MySQL
 FROM mysql
@@ -16,7 +21,7 @@ ENV MYSQL_PASSWORD PAtanes
 ### Adicionando os scripts SQL para serem executados na criação do banco
 COPY ./api/db/ /docker-entrypoint-initdb.d/
 ```	
-## script.sql:
+## Script SQL (api/db/script.sql):
 ```sql
 CREATE DATABASE IF NOT EXISTS exemplodb;
 USE exemplodb;
@@ -32,7 +37,7 @@ INSERT INTO products VALUE(0, 'Curso Front-end especialista', 2500);
 INSERT INTO products VALUE(0, 'Curso JS Fullstack', 900);
 INSERT INTO products VALUE(0, 'Curso Back-end Java', 3000);
 ```
-
+Construção e execução (comandos Docker):
 Na pasta raiz do projeto executar o comando docker para criar a imagem do mysql com as informações e a estrutura que você definiu no Dockerfile:
 ```bash
 docker build -t mysql-image -f api/db/Dockerfile .
@@ -50,41 +55,35 @@ Dessa forma é possivel acessar as informações do banco de dados utilizando o 
 Se quiser manter os dados do banco de dados "salvos" após alguma alteração, inclusão, atualização e ou exclusão de dados é preciso fazer uso do **volume** do docker e o comando muda uma pouco:
 
 ```bash 
-docker run -d -v d:/Repositorios/Docker/api/db/data:/var/lib/mysql -p 3306:3306 --rm --name mysql-container mysql-image
+docker run -d -v /caminho/para/seus/dados/api/db/data:/var/lib/mysql -p 3306:3306 --rm --name mysql-container mysql-image
 ```
+Obs.: Substitua <code>/caminho/para/seus/dados</code> pelo caminho real no seu sistema.
+
 Obs.: Se o container estiver rodando é preciso pará-lo primeiro antes de executar o novo comando run, para parar o container você pode usar o comando:
 ```bash 
 docker stop mysql-container
 ```
-## Agora vamos criar o conatiner do node
-Com o node instalado na sua máquina, dentro da pasta api execute o comando
-```bash 
-npm init
-```
-para instalar as dependencias do node na pasta do projeto.
+## Configuração do Node.js (API):
 
-Instalar o nodemon para fazer reload automático dos arquivos javascript sempre que existeir alguma atualização:
+Estrutura de pastas: <code>api/</code>
 
+Inicialização do Node.js:
+Verifique se o Node está instalado na sua máquina antes de executar os comandos:
 ```bash 
-npm install --save-dev nodemon
+cd api
+npm init -y
+npm install express mysql2 nodemon
 ```
-Instalar o express paar facilitar a criação de rotas para a aplicação e o banco de dados:
+Esses comandos vão fazer a instalação das dependencias do node na pasta do projeto,
+instalar o nodemon para fazer reload automático dos arquivos javascript sempre que existir alguma atualização, o express para facilitar a criação de rotas para a aplicação e o banco de dados e atualizar o pacote do mysql no node para evitar problemas de autenticação na hora de rodar a aplicação:
 
-```bash 
-npm install save express mysql
-```
-No arquivo package.json que foi criado na pasta api é preciso incluir o comando start:
+package.json (adicione o script "start"):
 ```json
 "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js"
   }, 
 ```
-Atualizar o pacote do mysql no node para evitar problemas de autenticação na hora de rodar a aplicação:
-```bash
- npm un mysql && npm i mysql2
-```
-Criar o arquivo index.js:
+index.js (API):
 ```javascript
 const express = require('express');
 const mysql = require('mysql2');
@@ -116,14 +115,12 @@ app.listen(9001, '0.0.0.0', function() {
   console.log('Listening on port 9001');
 })
 ```
-Obs.: Para saber o IP do mysql-container podemos usar o comando:
+Construção e execução (comandos Docker):
 ```bash
-docker inspect mysql-container
+docker run -d -v /caminho/para/api:/home/node/app -p 9001:9001 --link mysql-container --name node-container node-image
 ```
-Construir o container do node com o comando:
-```bash
-docker run -d -v d:/Repositorios/Docker/api:/home/node/app -p 9001:9001 --link mysql-container --rm --name node-container node-image
-```
+Obs.: Substitua <code>/caminho/para/seus/dados</code> pelo caminho real no seu sistema.
+
 Verificar se os dois containers estão rodando com o comando:
 ```bash
 docker ps
@@ -137,16 +134,18 @@ e35892af715c   mysql-image   "docker-entrypoint.s…"   25 minutes ago   Up 25 m
 Se estiver tudo certo podemos abrir o browser e digitar a url 
 http://localhost:9001/products para ver as informações armazenadas no banco de dados dessa forma:
   
-![alt text](image.png)
+![Listagem de produtos no browser](image.png)
   
-Agora vamos construir a imagem e o container do PHP para deixar nosso "front-end" mais agradável e bonito:
+## Configuração do PHP (Frontend):
 
-Criar uma pasta website na raiz do projeto e dentro dessa pasta criar o arquivo Dockerfile:
+Estrutura de pastas: <code>website/</code>
+
+Dockerfile:
 ```bash
 FROM php:7.2-apache
 WORKDIR /var/www/html
 ```
-e o arquivo index.php:
+index.php (website/index.php):
 
 ```php
 <!DOCTYPE html>
@@ -183,25 +182,19 @@ e o arquivo index.php:
 </body>
 </html>
 ```
-construir a imagem com o comando
+Construção e execução (comandos Docker):
 ```bash
 docker build -t php-image -f website/Dockerfile .
+docker run -d -v /caminho/para/website:/var/www/html -p 8888:80 --link node-container --rm --name php-container php-image
 ```
-e depois criar o container com o comando
-```bash
-docker run -d -v d:/Repositorios/Docker/website:/var/www/html -p 8888:80 --link node-container --rm --name php-container php-image
-```
-O resultado final no browser deve ser esse:
+O resultado final no browser deve ser parecido com esse:
   
 ![alt text](image-1.png)
 
-# Docker Compose
+# Docker Compose (Otimização):
 ## Otimizando a execução dos containers
 
-Com o comando docker-compose podemos agilizar e organizar melhor a criação e execução dos containers da nossa aplicação, dessa forma temos um maior controle e centralização dos comandos / configurações de todos os containers que compõe nossa aplicação.
-
-Precisamos criar um arquivo docker-compose.yml na raiz da nossa aplicação com o conteúdo:
-
+docker-compose.yml:
 ```yaml
 version: "3.7"
 services:
@@ -242,16 +235,18 @@ services:
     depends_on:
       - api
 ```
-depois para iniciar e carregar os containers podemos usar o comando
+Execução com Docker Compose:
 
 ```bash
 docker-compose up -d
+docker-compose down # Para parar tudo
 ```
 ![Containers em execução](image-2.png)
 
-Para parar todos os containers de uma vez usamos o comando
-
-```bash
-docker-compose stop
-```
 ![Containers parados](image-3.png)
+
+Observações:
+
+Substitua os caminhos <code>/caminho/para/...</code> pelos caminhos reais no seu sistema.
+Ajuste as versões das imagens conforme necessário.
+O arquivo docker-compose.yml, facilita a execução, e o gerenciamento dos conteiners.
