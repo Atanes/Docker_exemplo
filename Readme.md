@@ -194,3 +194,64 @@ docker run -d -v d:/Repositorios/Docker/website:/var/www/html -p 8888:80 --link 
 O resultado final no browser deve ser esse:
   
 ![alt text](image-1.png)
+
+# Docker Compose
+## Otimizando a execução dos containers
+
+Com o comando docker-compose podemos agilizar e organizar melhor a criação e execução dos containers da nossa aplicação, dessa forma temos um maior controle e centralização dos comandos / configurações de todos os containers que compõe nossa aplicação.
+
+Precisamos criar um arquivo docker-compose.yml na raiz da nossa aplicação com o conteúdo:
+
+```yaml
+version: "3.7"
+services:
+  db:
+    image: mysql
+    container_name: mysql-container
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"
+    volumes:
+     - ./api/db/script.sql:/docker-entrypoint-initdb.d/script.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: PAtanes
+      MYSQL_DATABASE: exemplodb
+      MYSQL_USER: UAtanes
+      MYSQL_PASSWORD: PAtanes
+  api:
+    build: "./api"
+    container_name: node-container
+    restart: always
+    volumes:
+     - d:/Repositorios/Docker/api:/home/node/app
+    expose:
+      - "9001"
+    ports:
+      - "9001:9001"
+    depends_on:
+      - db
+  web:
+    image: php:7.2-apache
+    container_name: php-container
+    restart: always
+    volumes:
+     - d:/Repositorios/Docker/website:/var/www/html
+    ports:
+      - "8888:80"
+    depends_on:
+      - api
+```
+depois para iniciar e carregar os containers podemos usar o comando
+
+```bash
+docker-compose up -d
+```
+![Containers em execução](image-2.png)
+
+Para parar todos os containers de uma vez usamos o comando
+
+```bash
+docker-compose stop
+```
+![Containers parados](image-3.png)
