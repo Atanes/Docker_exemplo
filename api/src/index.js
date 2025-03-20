@@ -10,7 +10,10 @@ const connection = mysql.createConnection({
     database : 'exemplodb'
 });
 
-connection.connect();
+connection.connect(function(err) {
+  if (err) throw err;
+  console.log("Database Connected!");
+});
 
 app.get('/products', function(req, res) {
   connection.query('SELECT * FROM products', function (error, results) {

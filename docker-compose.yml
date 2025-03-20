@@ -1,0 +1,38 @@
+version: "3.7"
+services:
+  db:
+    image: mysql
+    container_name: mysql-container
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"
+    volumes:
+     - ./api/db/script.sql:/docker-entrypoint-initdb.d/script.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: PAtanes
+      MYSQL_DATABASE: exemplodb
+      MYSQL_USER: UAtanes
+      MYSQL_PASSWORD: PAtanes
+  api:
+    build: "./api"
+    container_name: node-container
+    restart: always
+    volumes:
+     - d:/Repositorios/Docker/api:/home/node/app
+    expose:
+      - "9001"
+    ports:
+      - "9001:9001"
+    depends_on:
+      - db
+  web:
+    image: php:7.2-apache
+    container_name: php-container
+    restart: always
+    volumes:
+     - d:/Repositorios/Docker/website:/var/www/html
+    ports:
+      - "8888:80"
+    depends_on:
+      - api
